@@ -1,0 +1,3 @@
+-- Baseline migration. Schema changes are added as new files: V2__..., V3__...
+-- Never edit a migration after it has been applied to a shared environment.
+SELECT 1;
