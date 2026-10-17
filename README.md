@@ -59,4 +59,4 @@ Security rules:
 - Secrets come from environment variables or a vault, never from Git.
 - Security is deny-by-default: every new endpoint requires authentication unless explicitly opened.
 
-Requirements: see the team requirements doc (Latvian).
+Requirements: see the team requirements doc (Latvian). Open decisions and work: [BACKLOG.md](BACKLOG.md).
