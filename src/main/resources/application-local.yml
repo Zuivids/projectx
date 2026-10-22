@@ -1,0 +1,14 @@
+# Local development only. Activate with: --spring.profiles.active=local
+# Never use this profile or its key in staging or production.
+
+app:
+  mfa:
+    # LOCAL-ONLY key. Production must set MFA_ENCRYPTION_KEY from a secret store.
+    encryption-key: cN8TweTSrRzWyffTo6nVDh7Yxz8c6VvVswT6oHB3DQ8=
+
+server:
+  servlet:
+    session:
+      cookie:
+        # Allows the session cookie over plain http://localhost
+        secure: false

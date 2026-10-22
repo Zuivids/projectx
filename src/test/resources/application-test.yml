@@ -1,0 +1,4 @@
+app:
+  mfa:
+    # TEST-ONLY key
+    encryption-key: laTfKL0uYDqlzCauRBc8fjb1EchhryHDMaG/WAmO9fA=
