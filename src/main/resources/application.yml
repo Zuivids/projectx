@@ -40,6 +40,14 @@ app:
     register:
       limit: 10
       window: 1h
+  # After login. Before login (and during the MFA step) server.servlet.session.timeout applies.
+  session:
+    learner:
+      idle: 30m
+      absolute: 24h
+    staff:
+      idle: 15m
+      absolute: 8h
 
 server:
   error:

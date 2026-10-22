@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from './App'
 import { authApi, type Me } from './api/auth'
-import { ApiError } from './api/client'
+import { api, ApiError } from './api/client'
 import { AuthProvider } from './auth/AuthContext'
 
 const learner: Me = {
@@ -71,6 +71,37 @@ describe('page access', () => {
     loggedInAs({ ...admin, mfaVerified: true })
     renderAt('/admin')
     expect(await screen.findByRole('heading', { name: 'Administrēšana' })).toBeInTheDocument()
+  })
+})
+
+describe('session ended by the server', () => {
+  it('sends the user to login with a notice when an API call gets 401', async () => {
+    let sessionAlive = true
+    vi.spyOn(authApi, 'me').mockImplementation(async () => {
+      if (!sessionAlive) throw new ApiError(401, 'Unauthorized')
+      return learner
+    })
+    renderAt('/konts/drosiba')
+    expect(await screen.findByRole('heading', { name: 'Drošība' })).toBeInTheDocument()
+
+    // The server ends the session (e.g. timeout); the next API call answers 401
+    sessionAlive = false
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 401 })))
+    await api('/api/v1/me/mfa/totp', { method: 'POST' }).catch(() => undefined)
+
+    expect(await screen.findByRole('heading', { name: 'Pieslēgties' })).toBeInTheDocument()
+    expect(screen.getByText('Sesija beidzās. Lūdzu, pieslēdzies vēlreiz.')).toBeInTheDocument()
+  })
+
+  it('does not treat a wrong password as an ended session', async () => {
+    loggedInAs(null)
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 401 })))
+    renderAt('/pieslegties')
+    await screen.findByRole('heading', { name: 'Pieslēgties' })
+
+    await api('/api/v1/auth/login', { method: 'POST', body: {} }).catch(() => undefined)
+
+    expect(screen.queryByText(/Sesija beidzās/)).not.toBeInTheDocument()
   })
 })
 

@@ -60,6 +60,9 @@ Security rules:
   15 minutes. The error message is the same for a wrong email, a wrong password and a blocked account.
 - Rate limits and per-IP blocks are kept in memory (one app instance). Behind a reverse proxy, forwarded
   headers must be configured first (backlog W-06), or all users would share the proxy's IP.
+- Session timeouts: learners 30 minutes idle and 24 hours at most; admins 15 minutes idle and 8 hours at
+  most (`app.session` in `application.yml`). Disabling an account ends its open sessions on the next
+  request. The frontend then shows the login page with "Sesija beidzās".
 - MFA is optional for learners. Admin endpoints (`/api/v1/admin/**`) need an admin role **and** a session
   that passed MFA.
 - Authenticator codes and recovery codes each work once. TOTP secrets are AES-256-GCM encrypted.

@@ -118,6 +118,12 @@ public class User {
 		this.updatedAt = now;
 	}
 
+	/** Blocks login and ends the user's open sessions on their next request. */
+	public void disable(Instant now) {
+		this.status = UserStatus.DISABLED;
+		this.updatedAt = now;
+	}
+
 	public void grantRole(Role role, Instant now) {
 		if (this.roles.add(role)) {
 			this.updatedAt = now;

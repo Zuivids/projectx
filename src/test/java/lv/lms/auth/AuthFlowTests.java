@@ -245,6 +245,54 @@ class AuthFlowTests {
 	}
 
 	@Test
+	void disablingAnAccountEndsItsOpenSession() throws Exception {
+		String email = register();
+		MockHttpSession session = new MockHttpSession();
+		login(session, email, PASSWORD).andExpect(status().isOk());
+		this.mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isOk());
+
+		User user = this.users.findByEmail(email).orElseThrow();
+		user.disable(this.clock.instant());
+		this.users.save(user);
+
+		this.mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isUnauthorized());
+		assertThat(session.isInvalid()).isTrue();
+		assertThat(eventsFor(email)).contains(AuditEventType.SESSION_ENDED);
+		// And a disabled account cannot log in again
+		login(new MockHttpSession(), email, PASSWORD).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void learnerSessionHas30MinuteIdleAnd24HourAbsoluteTimeout() throws Exception {
+		String email = register();
+		MockHttpSession session = new MockHttpSession();
+		login(session, email, PASSWORD).andExpect(status().isOk());
+		assertThat(session.getMaxInactiveInterval()).isEqualTo(30 * 60);
+
+		this.clock.advance(Duration.ofHours(23));
+		this.mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isOk());
+		this.clock.advance(Duration.ofHours(1));
+		this.mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void staffSessionHas15MinuteIdleAnd8HourAbsoluteTimeout() throws Exception {
+		String email = register();
+		User user = this.users.findByEmail(email).orElseThrow();
+		user.grantRole(Role.ADMIN, this.clock.instant());
+		this.users.save(user);
+
+		MockHttpSession session = new MockHttpSession();
+		login(session, email, PASSWORD).andExpect(status().isOk());
+		assertThat(session.getMaxInactiveInterval()).isEqualTo(15 * 60);
+
+		this.clock.advance(Duration.ofHours(7).plusMinutes(59));
+		this.mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isOk());
+		this.clock.advance(Duration.ofMinutes(1));
+		this.mvc.perform(get("/api/v1/me").session(session)).andExpect(status().isUnauthorized());
+	}
+
+	@Test
 	void csrfCookieRoundTripWorksLikeABrowser() throws Exception {
 		String email = register();
 		Cookie xsrf = this.mvc.perform(get("/api/v1/auth/csrf"))

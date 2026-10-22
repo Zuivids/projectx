@@ -17,11 +17,33 @@ import org.springframework.validation.annotation.Validated;
  * @param mfa MFA settings
  * @param lockout account lockout settings
  * @param rateLimit per-IP request limits for the login endpoints
+ * @param session session timeouts for learners and staff
  */
 @Validated
 @ConfigurationProperties("app")
 public record AppProperties(@NotBlank String name, @Valid @NotNull Mfa mfa, @Valid @NotNull Lockout lockout,
-		@Valid @NotNull RateLimit rateLimit) {
+		@Valid @NotNull RateLimit rateLimit, @Valid @NotNull Session session) {
+
+	/**
+	 * Session timeouts per kind of user (requirement AUTH-15).
+	 *
+	 * @param learner timeouts for learners
+	 * @param staff timeouts for admins; shorter, because these accounts can do more harm
+	 */
+	public record Session(@Valid @NotNull Timeouts learner, @Valid @NotNull Timeouts staff) {
+
+		public Timeouts forUser(boolean staff) {
+			return staff ? this.staff : this.learner;
+		}
+
+		/**
+		 * @param idle the session ends after this long without any request
+		 * @param absolute the session ends this long after login, even if it is in use
+		 */
+		public record Timeouts(@NotNull Duration idle, @NotNull Duration absolute) {
+		}
+
+	}
 
 	/**
 	 * @param encryptionKey base64-encoded 256-bit AES key used to encrypt TOTP secrets

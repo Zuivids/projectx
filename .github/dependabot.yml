@@ -21,6 +21,10 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # Types must match the Node.js version we run (24, see CI); raise this together with Node
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

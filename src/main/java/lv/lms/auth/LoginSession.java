@@ -3,6 +3,7 @@ package lv.lms.auth;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -65,6 +66,11 @@ class LoginSession {
 	void establish(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
 		HttpSession session = rotateSession(request);
 		session.removeAttribute(PENDING_MFA);
+		if (authentication.getPrincipal() instanceof AuthenticatedUser user) {
+			// Idle timeout per kind of user; the servlet container enforces it
+			Duration idle = this.properties.session().forUser(user.staff()).idle();
+			session.setMaxInactiveInterval(Math.toIntExact(idle.toSeconds()));
+		}
 		SecurityContext context = this.holderStrategy.createEmptyContext();
 		context.setAuthentication(authentication);
 		this.holderStrategy.setContext(context);
