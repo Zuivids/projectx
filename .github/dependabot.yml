@@ -11,6 +11,17 @@ updates:
         patterns:
           - "org.springframework.boot*"
 
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      # Minor and patch updates in one PR; major versions get their own PR
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

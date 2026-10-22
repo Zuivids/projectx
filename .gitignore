@@ -35,3 +35,6 @@ build/
 ### Secrets and local environment ###
 .env
 *.env.local
+
+### Local tool settings ###
+.claude/
