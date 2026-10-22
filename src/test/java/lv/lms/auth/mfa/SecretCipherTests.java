@@ -36,8 +36,9 @@ class SecretCipherTests {
 	}
 
 	private static AppProperties properties(String key) {
+		AppProperties.RateLimit.Rule rule = new AppProperties.RateLimit.Rule(20, Duration.ofMinutes(1));
 		return new AppProperties("Test", new AppProperties.Mfa(key, Duration.ofMinutes(5)),
-				new AppProperties.Lockout(5, Duration.ofMinutes(15)));
+				new AppProperties.Lockout(5, 20, Duration.ofMinutes(15)), new AppProperties.RateLimit(rule, rule, rule));
 	}
 
 }

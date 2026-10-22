@@ -54,6 +54,10 @@ async function parse<T>(response: Response): Promise<T> {
     return (text ? JSON.parse(text) : undefined) as T
   }
   let message = defaultMessage(response.status)
+  // Rate limiting: always the Latvian text, never the server's English detail
+  if (response.status === 429) {
+    throw new ApiError(429, message)
+  }
   try {
     const problem = (await response.json()) as { detail?: string }
     if (problem.detail) {

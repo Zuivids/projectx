@@ -38,15 +38,18 @@ public class AuthService {
 
 	private final Clock clock;
 
+	private final LoginAttemptTracker attempts;
+
 	/** Compared against when the email is unknown, so the response time does not reveal it. */
 	private final String dummyPasswordHash;
 
 	AuthService(UserRepository users, PasswordEncoder passwordEncoder, MfaService mfa, AuditService audit,
-			AppProperties properties, Clock clock) {
+			LoginAttemptTracker attempts, AppProperties properties, Clock clock) {
 		this.users = users;
 		this.passwordEncoder = passwordEncoder;
 		this.mfa = mfa;
 		this.audit = audit;
+		this.attempts = attempts;
 		this.properties = properties;
 		this.clock = clock;
 		this.dummyPasswordHash = passwordEncoder.encode("timing-equalization-only");
@@ -85,8 +88,9 @@ public class AuthService {
 		}
 		User user = found.get();
 		boolean passwordMatches = this.passwordEncoder.matches(password, user.getPasswordHash());
-		if (!user.canLogIn(now)) {
-			this.audit.record(AuditEventType.LOGIN_FAILED, user.getId(), ipAddress, "account locked or disabled");
+		String blockReason = blockReason(user, ipAddress, now);
+		if (blockReason != null) {
+			this.audit.record(AuditEventType.LOGIN_FAILED, user.getId(), ipAddress, blockReason);
 			throw AuthenticationFailedException.invalidCredentials();
 		}
 		if (!passwordMatches) {
@@ -101,7 +105,7 @@ public class AuthService {
 			// attacker who knows the password could guess MFA codes without ever locking.
 			return LoginResult.mfaRequired(user.getId());
 		}
-		user.resetFailedAttempts(now);
+		resetFailures(user, ipAddress, now);
 		this.audit.record(AuditEventType.LOGIN_SUCCEEDED, user.getId(), ipAddress, null);
 		return LoginResult.authenticated(authentication(user, false), user.requiresMfa());
 	}
@@ -111,15 +115,16 @@ public class AuthService {
 	public Authentication completeMfaLogin(long userId, String code, String ipAddress) {
 		Instant now = this.clock.instant();
 		User user = this.users.findById(userId).orElseThrow(AuthenticationFailedException::noPendingLogin);
-		if (!user.canLogIn(now)) {
-			this.audit.record(AuditEventType.MFA_CHALLENGE_FAILED, user.getId(), ipAddress, "account locked or disabled");
+		String blockReason = blockReason(user, ipAddress, now);
+		if (blockReason != null) {
+			this.audit.record(AuditEventType.MFA_CHALLENGE_FAILED, user.getId(), ipAddress, blockReason);
 			throw AuthenticationFailedException.invalidCode();
 		}
 		if (!this.mfa.verifyChallenge(userId, code, ipAddress)) {
 			registerFailure(user, AuditEventType.MFA_CHALLENGE_FAILED, ipAddress, now);
 			throw AuthenticationFailedException.invalidCode();
 		}
-		user.resetFailedAttempts(now);
+		resetFailures(user, ipAddress, now);
 		this.audit.record(AuditEventType.MFA_CHALLENGE_PASSED, user.getId(), ipAddress, null);
 		this.audit.record(AuditEventType.LOGIN_SUCCEEDED, user.getId(), ipAddress, null);
 		return authentication(user, true);
@@ -132,13 +137,38 @@ public class AuthService {
 		return authentication(user, true);
 	}
 
+	/** @return why the user may not log in from this IP right now, or {@code null} */
+	private String blockReason(User user, String ipAddress, Instant now) {
+		if (!user.canLogIn(now)) {
+			return "account locked or disabled";
+		}
+		if (this.attempts.isBlocked(user.getId(), ipAddress)) {
+			return "blocked for this IP";
+		}
+		return null;
+	}
+
+	/**
+	 * Counts a failure for this account from this IP, and for the account overall. The
+	 * per-IP block hits the attacker's address only; the account-wide lock is the
+	 * backstop against guessing from many addresses.
+	 */
 	private void registerFailure(User user, AuditEventType type, String ipAddress, Instant now) {
 		this.audit.record(type, user.getId(), ipAddress, null);
 		AppProperties.Lockout lockout = this.properties.lockout();
+		if (this.attempts.recordFailure(user.getId(), ipAddress)) {
+			this.audit.record(AuditEventType.BLOCKED_FOR_IP, user.getId(), ipAddress,
+					"blocked for " + lockout.duration());
+		}
 		if (user.registerFailedAttempt(lockout.maxFailedAttempts(), lockout.duration(), now)) {
 			this.audit.record(AuditEventType.ACCOUNT_LOCKED, user.getId(), ipAddress,
 					"locked for " + lockout.duration());
 		}
+	}
+
+	private void resetFailures(User user, String ipAddress, Instant now) {
+		user.resetFailedAttempts(now);
+		this.attempts.reset(user.getId(), ipAddress);
 	}
 
 	private static Authentication authentication(User user, boolean mfaVerified) {

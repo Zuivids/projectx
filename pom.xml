@@ -46,6 +46,11 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-mysql</artifactId>
 		</dependency>
+		<!-- Bounded in-memory caches for rate limiting and per-IP login throttling -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 		<!-- Required by Spring Security's Argon2PasswordEncoder -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
