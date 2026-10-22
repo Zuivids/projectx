@@ -1,0 +1,17 @@
+# Opens weekly pull requests for outdated dependencies. CI tests each one before you merge.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # One PR for all Spring Boot managed updates instead of many small ones
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
