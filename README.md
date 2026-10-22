@@ -5,11 +5,19 @@ Online learning platform with paid courses, MFA login and an admin area.
 
 ## Stack
 
-- Java 21, Spring Boot 4.1 (Web MVC, Security, Data JPA, Validation, Actuator)
-- MariaDB 11.4 LTS, schema managed by Flyway (`src/main/resources/db/migration`)
-- Tests: JUnit 5 + Testcontainers (needs Docker running)
+- Backend: Java 21, Spring Boot 4.1 (Web MVC, Security, Data JPA, Validation, Actuator)
+- Database: MariaDB 11.4 LTS, schema managed by Flyway (`src/main/resources/db/migration`)
+- Frontend: React 19 + TypeScript + Vite in [`frontend/`](frontend/README.md) (needs Node.js 24)
+- Tests: JUnit 5 + Testcontainers (needs Docker running), Vitest for the frontend
+- CI: GitHub Actions runs backend and frontend checks on every pull request
 
-## Run locally
+## Run the whole app locally
+
+1. Start the backend: run `TestProjectxApplication` from `src/test` in your IDE (see below for other ways).
+2. Start the frontend: `cd frontend`, then `npm install` (first time only) and `npm run dev`.
+3. Open http://localhost:5173.
+
+## Run the backend locally
 
 Easiest: run `TestProjectxApplication` from `src/test` in your IDE. It starts a throwaway MariaDB
 container and the `local` profile automatically.
