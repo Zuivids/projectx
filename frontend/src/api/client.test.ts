@@ -50,6 +50,18 @@ describe('api client', () => {
     expect((error as ApiError).message).toBe('Invalid email or password')
   })
 
+  it('shows a Latvian message when rate limited', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(429, { status: 429, detail: 'Too many attempts, please try again later' })),
+    )
+
+    const error = await api('/api/v1/me').catch((e: unknown) => e)
+
+    expect((error as ApiError).status).toBe(429)
+    expect((error as ApiError).message).toBe('Pārāk daudz mēģinājumu, mēģini vēlāk')
+  })
+
   it('retries once with a fresh token when the CSRF cookie was cleared', async () => {
     let posts = 0
     const fetchMock = vi.fn(async (url: string) => {

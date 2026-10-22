@@ -53,8 +53,13 @@ every POST/PUT/DELETE.
 Security rules:
 
 - Passwords: 12–128 characters, hashed with Argon2id.
-- Five failed password or MFA attempts lock the account for 15 minutes. The error message is the same for
-  a wrong email, a wrong password and a locked account.
+- Rate limits per client IP: login and MFA 20 requests/minute, registration 10/hour. Over the limit the
+  API answers `429 Too Many Requests` with a `Retry-After` header.
+- Five failed password or MFA attempts from one IP block that IP for the account for 15 minutes; the real
+  user on another IP can still log in. Twenty failures from all IPs together lock the whole account for
+  15 minutes. The error message is the same for a wrong email, a wrong password and a blocked account.
+- Rate limits and per-IP blocks are kept in memory (one app instance). Behind a reverse proxy, forwarded
+  headers must be configured first (backlog W-06), or all users would share the proxy's IP.
 - MFA is optional for learners. Admin endpoints (`/api/v1/admin/**`) need an admin role **and** a session
   that passed MFA.
 - Authenticator codes and recovery codes each work once. TOTP secrets are AES-256-GCM encrypted.

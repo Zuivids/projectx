@@ -26,8 +26,20 @@ app:
     encryption-key: ${MFA_ENCRYPTION_KEY}
     pending-timeout: 5m
   lockout:
-    max-failed-attempts: 5
+    max-failed-attempts-per-ip: 5
+    max-failed-attempts: 20
     duration: 15m
+  # Per client IP. Generous on purpose: a school or office shares one IP among many users.
+  rate-limit:
+    login:
+      limit: 20
+      window: 1m
+    mfa:
+      limit: 20
+      window: 1m
+    register:
+      limit: 10
+      window: 1h
 
 server:
   error:

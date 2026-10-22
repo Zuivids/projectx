@@ -3,6 +3,7 @@ package lv.lms.auth;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.jayway.jsonpath.JsonPath;
 import jakarta.servlet.http.Cookie;
@@ -35,6 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthFlowTests {
 
 	private static final String PASSWORD = "correct horse battery";
+
+	/** JUnit creates a new instance per test, so every test gets its own IP. */
+	private final String ip = randomIp();
 
 	@Autowired
 	private MockMvc mvc;
@@ -88,18 +92,38 @@ class AuthFlowTests {
 	}
 
 	@Test
-	void locksAccountAfterFiveFailuresUntilLockExpires() throws Exception {
+	void fiveFailuresBlockOnlyTheAttackersIp() throws Exception {
 		String email = register();
 		for (int i = 0; i < 5; i++) {
 			login(new MockHttpSession(), email, "wrong password!!").andExpect(status().isUnauthorized());
 		}
-		// Correct password is refused while locked, with the same generic message
+		// Correct password is refused from the attacker's IP, with the same generic message
 		login(new MockHttpSession(), email, PASSWORD).andExpect(status().isUnauthorized())
 			.andExpect(jsonPath("$.detail").value("Invalid email or password"));
-		assertThat(eventsFor(email)).contains(AuditEventType.ACCOUNT_LOCKED);
+		assertThat(eventsFor(email)).contains(AuditEventType.BLOCKED_FOR_IP).doesNotContain(AuditEventType.ACCOUNT_LOCKED);
+
+		// The real user on another IP is not affected
+		loginFrom(randomIp(), email, PASSWORD).andExpect(status().isOk());
 
 		this.clock.advance(Duration.ofMinutes(16));
 		login(new MockHttpSession(), email, PASSWORD).andExpect(status().isOk());
+	}
+
+	@Test
+	void manyFailuresFromManyIpsLockTheWholeAccount() throws Exception {
+		String email = register();
+		// 20 failures spread over 5 addresses, each staying under the per-IP limit of 5
+		for (int i = 0; i < 5; i++) {
+			String attackerIp = randomIp();
+			for (int j = 0; j < 4; j++) {
+				loginFrom(attackerIp, email, "wrong password!!").andExpect(status().isUnauthorized());
+			}
+		}
+		loginFrom(randomIp(), email, PASSWORD).andExpect(status().isUnauthorized());
+		assertThat(eventsFor(email)).contains(AuditEventType.ACCOUNT_LOCKED);
+
+		this.clock.advance(Duration.ofMinutes(16));
+		loginFrom(randomIp(), email, PASSWORD).andExpect(status().isOk());
 	}
 
 	@Test
@@ -182,7 +206,7 @@ class AuthFlowTests {
 
 	@Test
 	void mfaStepExpiresAndCannotBeSkipped() throws Exception {
-		this.mvc.perform(post("/api/v1/auth/mfa").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+		this.mvc.perform(post("/api/v1/auth/mfa").with(browser()).contentType(MediaType.APPLICATION_JSON)
 			.content("{\"code\":\"123456\"}")).andExpect(status().isUnauthorized());
 
 		String email = register();
@@ -256,13 +280,13 @@ class AuthFlowTests {
 
 	/** @return the setup response and the confirm response */
 	private String[] enrollTotpResponseWithSecret(MockHttpSession session) throws Exception {
-		String setup = this.mvc.perform(post("/api/v1/me/mfa/totp").with(xsrf()).session(session))
+		String setup = this.mvc.perform(post("/api/v1/me/mfa/totp").with(browser()).session(session))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.otpauthUri").value(org.hamcrest.Matchers.startsWith("otpauth://totp/ProjectX:")))
 			.andReturn().getResponse().getContentAsString();
 		byte[] secret = Base32.decode(JsonPath.read(setup, "$.secret"));
 		String confirm = this.mvc
-			.perform(post("/api/v1/me/mfa/totp/confirm").with(xsrf()).session(session)
+			.perform(post("/api/v1/me/mfa/totp/confirm").with(browser()).session(session)
 				.contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + currentCode(secret) + "\"}"))
 			.andExpect(status().isOk())
 			.andReturn().getResponse().getContentAsString();
@@ -280,41 +304,58 @@ class AuthFlowTests {
 	}
 
 	private ResultActions registerRequest(String email, String password) throws Exception {
-		return this.mvc.perform(post("/api/v1/auth/register").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+		return this.mvc.perform(post("/api/v1/auth/register").with(browser()).contentType(MediaType.APPLICATION_JSON)
 			.content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\",\"displayName\":\"Test User\"}"));
 	}
 
 	private ResultActions login(MockHttpSession session, String email, String password) throws Exception {
-		return this.mvc.perform(post("/api/v1/auth/login").with(xsrf()).session(session)
+		return this.mvc.perform(post("/api/v1/auth/login").with(browser()).session(session)
 			.contentType(MediaType.APPLICATION_JSON).content(loginJson(email, password)));
 	}
 
 	private ResultActions mfa(MockHttpSession session, String code) throws Exception {
-		return this.mvc.perform(post("/api/v1/auth/mfa").with(xsrf()).session(session)
+		return this.mvc.perform(post("/api/v1/auth/mfa").with(browser()).session(session)
 			.contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + code + "\"}"));
 	}
 
 	private void logout(MockHttpSession session) throws Exception {
-		this.mvc.perform(post("/api/v1/auth/logout").with(xsrf()).session(session)).andExpect(status().isNoContent());
+		this.mvc.perform(post("/api/v1/auth/logout").with(browser()).session(session)).andExpect(status().isNoContent());
+	}
+
+	/** A request from this test's own client IP, with a CSRF token. */
+	private RequestPostProcessor browser() {
+		return browser(this.ip);
 	}
 
 	/**
-	 * Adds a CSRF token the way the frontend will: fetch the XSRF-TOKEN cookie and echo
-	 * it in the X-XSRF-TOKEN header. (Spring Security's {@code csrf()} test helper is not
-	 * used because it swaps in a different token repository for the whole context.)
+	 * Acts like the frontend running on the given client IP: fetches the XSRF-TOKEN cookie
+	 * and echoes it in the X-XSRF-TOKEN header. (Spring Security's {@code csrf()} test
+	 * helper is not used because it swaps in a different token repository for the whole
+	 * context.) Each test uses its own IP, so tests do not share rate limits.
 	 */
-	private RequestPostProcessor xsrf() {
+	private RequestPostProcessor browser(String clientIp) {
 		return (request) -> {
 			try {
 				Cookie token = this.mvc.perform(get("/api/v1/auth/csrf")).andReturn().getResponse().getCookie("XSRF-TOKEN");
 				request.setCookies(token);
 				request.addHeader("X-XSRF-TOKEN", token.getValue());
+				request.setRemoteAddr(clientIp);
 				return request;
 			}
 			catch (Exception ex) {
 				throw new IllegalStateException(ex);
 			}
 		};
+	}
+
+	private ResultActions loginFrom(String clientIp, String email, String password) throws Exception {
+		return this.mvc.perform(post("/api/v1/auth/login").with(browser(clientIp)).session(new MockHttpSession())
+			.contentType(MediaType.APPLICATION_JSON).content(loginJson(email, password)));
+	}
+
+	static String randomIp() {
+		ThreadLocalRandom random = ThreadLocalRandom.current();
+		return "10." + random.nextInt(256) + "." + random.nextInt(256) + "." + random.nextInt(1, 255);
 	}
 
 	private List<AuditEventType> eventsFor(String email) {
