@@ -38,3 +38,7 @@ build/
 
 ### Local tool settings ###
 .claude/
+
+### Local run and release output ###
+logs/
+release/

@@ -1,18 +1,28 @@
-# Local development database. Copy .env.example to .env and set passwords first.
+# Local development database. Started by dev-start.bat / dev-start.sh, which also create .env.
+name: projectx
+
 services:
   mariadb:
     image: mariadb:11.4
+    container_name: projectx-mariadb
     environment:
       MARIADB_DATABASE: lms
       MARIADB_USER: lms_app
       MARIADB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
-      MARIADB_CHARACTER_SET_SERVER: utf8mb4
-      MARIADB_COLLATION_SERVER: utf8mb4_unicode_ci
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     ports:
+      # Only reachable from this computer (DBeaver: localhost:3306)
       - "127.0.0.1:3306:3306"
     volumes:
       - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
 
 volumes:
+  # Data survives restarts; reset-db removes it
   mariadb-data:
