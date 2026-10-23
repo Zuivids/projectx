@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { isAdmin } from '../api/auth'
 import { useAuth } from '../auth/AuthContext'
 import { APP_NAME } from '../config'
@@ -16,13 +16,23 @@ export function Layout() {
     await logout()
   }
 
+  const admin = isAdmin(user)
+  const fullWidth = useLocation().pathname === '/'
+
   return (
     <>
-      <header className="site-header">
+      {/* Red bar for admins: a constant reminder that this account can change things */}
+      <header className={admin ? 'site-header site-header-admin' : 'site-header'}>
         <div className="container header-inner">
-          <Link to={user ? '/sakums' : '/'} className="brand">
-            {APP_NAME}
-          </Link>
+          <span className="brand-row">
+            <Link to={user ? '/sakums' : '/'} className="brand">
+              <span className="brand-mark" aria-hidden="true">
+                {APP_NAME.charAt(0)}
+              </span>
+              {APP_NAME}
+            </Link>
+            {admin && <span className="role-pill">Admin</span>}
+          </span>
           <nav className="nav">
             {user ? (
               <>
@@ -46,9 +56,16 @@ export function Layout() {
           </nav>
         </div>
       </header>
-      <main className="container main">
-        <Outlet />
-      </main>
+      {/* The landing page lays out its own full-width bands; other pages use the centred column */}
+      {fullWidth ? (
+        <main className="main main-full">
+          <Outlet />
+        </main>
+      ) : (
+        <main className="container main">
+          <Outlet />
+        </main>
+      )}
       <footer className="site-footer">
         <div className="container muted">© {YEAR} {APP_NAME}</div>
       </footer>
