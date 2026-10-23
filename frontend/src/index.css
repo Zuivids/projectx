@@ -343,22 +343,57 @@ h2 {
 
 /* Content blocks */
 
+/* Landing page: full-width bands, content aligned with the logo through .container */
+.main-full {
+  padding-top: 0;
+}
+
 .hero {
-  margin: -2rem 0 2rem;
-  padding: 3rem 0 3.25rem;
-  background:
-    radial-gradient(circle at 85% 20%, rgb(242 183 5 / 18%) 0 140px, transparent 141px),
-    linear-gradient(135deg, var(--green-800), var(--green-900));
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--green-800) 0%, var(--green-900) 100%);
   color: #fff;
-  /* Full width band inside the centred container */
-  box-shadow: 0 0 0 100vmax var(--green-900);
-  clip-path: inset(0 -100vmax);
+}
+
+/* Decorative yellow circle, deliberately cut by the band's right edge */
+.hero::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -120px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: rgb(242 183 5 / 14%);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  /* Same space above and below the content */
+  padding-top: clamp(2.5rem, 7vw, 4.5rem);
+  padding-bottom: clamp(2.5rem, 7vw, 4.5rem);
+}
+
+.hero-inner > :last-child {
+  margin-bottom: 0;
 }
 
 .hero h1 {
-  font-size: clamp(1.9rem, 5vw, 2.7rem);
+  font-size: clamp(1.9rem, 5vw, 2.8rem);
   line-height: 1.15;
-  max-width: 640px;
+  max-width: 680px;
+  margin-bottom: 1rem;
+}
+
+.hero .lead {
+  margin: 0 0 1.75rem;
+}
+
+.landing-features {
+  margin-top: 2.5rem;
 }
 
 .hero h1 .highlight {
@@ -843,4 +878,14 @@ h1 {
 
 .hero h1 {
   color: #fff;
+}
+
+/* Phones: a smaller circle that stays at the edge instead of behind the text */
+@media (max-width: 640px) {
+  .hero::after {
+    width: 200px;
+    height: 200px;
+    right: -110px;
+    top: 30%;
+  }
 }

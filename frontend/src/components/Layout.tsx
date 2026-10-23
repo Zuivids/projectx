@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { isAdmin } from '../api/auth'
 import { useAuth } from '../auth/AuthContext'
 import { APP_NAME } from '../config'
@@ -17,6 +17,7 @@ export function Layout() {
   }
 
   const admin = isAdmin(user)
+  const fullWidth = useLocation().pathname === '/'
 
   return (
     <>
@@ -55,9 +56,16 @@ export function Layout() {
           </nav>
         </div>
       </header>
-      <main className="container main">
-        <Outlet />
-      </main>
+      {/* The landing page lays out its own full-width bands; other pages use the centred column */}
+      {fullWidth ? (
+        <main className="main main-full">
+          <Outlet />
+        </main>
+      ) : (
+        <main className="container main">
+          <Outlet />
+        </main>
+      )}
       <footer className="site-footer">
         <div className="container muted">© {YEAR} {APP_NAME}</div>
       </footer>
