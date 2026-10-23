@@ -18,6 +18,10 @@ public class ApiException extends ErrorResponseException {
 		return new ApiException(HttpStatus.CONFLICT, detail);
 	}
 
+	public static ApiException notFound(String detail) {
+		return new ApiException(HttpStatus.NOT_FOUND, detail);
+	}
+
 	public static ApiException badRequest(String detail) {
 		return new ApiException(HttpStatus.BAD_REQUEST, detail);
 	}

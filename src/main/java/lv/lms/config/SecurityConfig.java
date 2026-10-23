@@ -50,6 +50,8 @@ public class SecurityConfig {
 			.authorizeHttpRequests((auth) -> auth
 				.requestMatchers("/actuator/health", "/error").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
+				// Public course catalog (published courses only, enforced in CatalogService)
+				.requestMatchers(HttpMethod.GET, "/api/v1/courses", "/api/v1/courses/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/mfa")
 				.permitAll()
 				// Admin features need an admin role AND a second factor in this session (AUTH-06)
