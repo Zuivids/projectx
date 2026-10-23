@@ -31,7 +31,7 @@ class AdminBootstrapTests {
 	private MutableClock clock;
 
 	@Test
-	void grantsAdminOnceToListedRegisteredAccounts() {
+	void grantsSuperAdminOnceToListedRegisteredAccounts() {
 		String email = "boss-" + UUID.randomUUID() + "@example.com";
 		User user = this.users.save(new User(email, "{noop}unused", "Boss", Role.LEARNER, this.clock.instant()));
 
@@ -42,7 +42,7 @@ class AdminBootstrapTests {
 		bootstrap.run(null);
 		bootstrap.run(null);
 
-		assertThat(this.users.findById(user.getId()).orElseThrow().getRoles()).contains(Role.ADMIN, Role.LEARNER);
+		assertThat(this.users.findById(user.getId()).orElseThrow().getRoles()).contains(Role.SUPER_ADMIN, Role.LEARNER);
 		assertThat(this.auditLog.findByUserIdOrderByOccurredAtAsc(user.getId())
 			.stream()
 			.map(AuditLogEntry::getEventType)

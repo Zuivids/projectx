@@ -6,9 +6,11 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 
 import lv.lms.audit.AuditEventType;
 import lv.lms.audit.AuditService;
@@ -56,6 +58,25 @@ public class MfaService {
 	@Transactional(readOnly = true)
 	public long remainingRecoveryCodes(long userId) {
 		return this.recoveryCodes.countUnused(userId);
+	}
+
+	/** Which of these users have MFA turned on; one query for a whole page of users. */
+	@Transactional(readOnly = true)
+	public Set<Long> enabledAmong(Collection<Long> userIds) {
+		return userIds.isEmpty() ? Set.of() : this.totpFactors.findConfirmedUserIds(userIds);
+	}
+
+	/**
+	 * Removes the authenticator and recovery codes, e.g. when a user lost their phone. The
+	 * caller is responsible for auditing and for ending the user's sessions.
+	 * @return {@code true} if the user had MFA
+	 */
+	@Transactional
+	public boolean removeAll(long userId) {
+		boolean existed = this.totpFactors.existsById(userId);
+		this.totpFactors.deleteById(userId);
+		this.recoveryCodes.deleteAllForUser(userId);
+		return existed;
 	}
 
 	/**

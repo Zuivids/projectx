@@ -47,6 +47,8 @@ the session and CSRF cookies work as in production.
 | `/admin` | Admin panel start | Admins who passed MFA in this session |
 | `/admin/kursi` | Course list, new course | Admins with MFA |
 | `/admin/kursi/:id` | Course editor: details, status, sections and lessons | Admins with MFA |
+| `/admin/lietotaji` | User search | Admins with MFA |
+| `/admin/lietotaji/:id` | User details, actions, roles (super admin), activity | Admins with MFA |
 
 Route guards only decide what to show. The real protection is on the server, which checks every API request.
 

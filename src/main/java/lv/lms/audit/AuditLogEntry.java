@@ -30,8 +30,13 @@ public class AuditLogEntry {
 	@Column(name = "event_type", nullable = false, length = 50)
 	private AuditEventType eventType;
 
+	/** Who did it (for admin actions: the admin). */
 	@Column(name = "user_id")
 	private Long userId;
+
+	/** Whose account an admin action was about; empty for a user's own actions. */
+	@Column(name = "target_user_id")
+	private Long targetUserId;
 
 	@Column(name = "ip_address", length = 45)
 	private String ipAddress;
@@ -42,10 +47,12 @@ public class AuditLogEntry {
 	protected AuditLogEntry() {
 	}
 
-	AuditLogEntry(Instant occurredAt, AuditEventType eventType, Long userId, String ipAddress, String details) {
+	AuditLogEntry(Instant occurredAt, AuditEventType eventType, Long userId, Long targetUserId, String ipAddress,
+			String details) {
 		this.occurredAt = occurredAt;
 		this.eventType = eventType;
 		this.userId = userId;
+		this.targetUserId = targetUserId;
 		this.ipAddress = ipAddress;
 		this.details = details;
 	}
@@ -60,6 +67,10 @@ public class AuditLogEntry {
 
 	public Long getUserId() {
 		return this.userId;
+	}
+
+	public Long getTargetUserId() {
+		return this.targetUserId;
 	}
 
 	public String getIpAddress() {

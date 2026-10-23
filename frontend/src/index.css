@@ -619,3 +619,41 @@ h2 {
   opacity: 0.5;
   cursor: default;
 }
+
+/* Admin users */
+
+.status-disabled {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.badge + .badge {
+  margin-left: 0.35rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-muted);
+}
+
+.facts dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .facts {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  .facts dd {
+    margin-bottom: 0.5rem;
+  }
+}

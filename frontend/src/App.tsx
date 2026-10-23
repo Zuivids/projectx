@@ -4,6 +4,8 @@ import { RedirectIfLoggedIn, RequireAdmin, RequireAuth } from './auth/guards'
 import { Layout } from './components/Layout'
 import { AdminCourseEditorPage } from './pages/admin/AdminCourseEditorPage'
 import { AdminCoursesPage } from './pages/admin/AdminCoursesPage'
+import { AdminUserPage } from './pages/admin/AdminUserPage'
+import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { AdminPage } from './pages/AdminPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CoursePage } from './pages/CoursePage'
@@ -38,6 +40,8 @@ export function AppRoutes() {
           <Route path="admin" element={<AdminPage />} />
           <Route path="admin/kursi" element={<AdminCoursesPage />} />
           <Route path="admin/kursi/:courseId" element={<AdminCourseEditorPage />} />
+          <Route path="admin/lietotaji" element={<AdminUsersPage />} />
+          <Route path="admin/lietotaji/:userId" element={<AdminUserPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

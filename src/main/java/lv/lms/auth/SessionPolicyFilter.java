@@ -3,6 +3,7 @@ package lv.lms.auth;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Optional;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +15,7 @@ import lv.lms.audit.AuditEventType;
 import lv.lms.audit.AuditService;
 import lv.lms.config.AppProperties;
 import lv.lms.user.UserRepository;
+import lv.lms.user.UserSessionState;
 import lv.lms.user.UserStatus;
 
 import org.springframework.security.core.Authentication;
@@ -26,6 +28,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * the session's login is loaded:
  * <ul>
  * <li>the account was disabled (or deleted) since login (W-05);</li>
+ * <li>an admin changed the user's access: roles or MFA (security version, W-08);</li>
  * <li>the session is older than the absolute timeout, 8 hours for staff (AUTH-15).</li>
  * </ul>
  * The request then continues as a logged-out request, so protected endpoints answer 401
@@ -71,9 +74,13 @@ public class SessionPolicyFilter extends OncePerRequestFilter {
 		if (!this.clock.instant().isBefore(expiresAt)) {
 			return "absolute timeout";
 		}
-		// One indexed lookup per request; keeps disabling an account effective immediately
-		if (this.users.findStatusById(user.id()).filter(UserStatus.ACTIVE::equals).isEmpty()) {
+		// One primary-key lookup per request; keeps admin changes effective immediately
+		Optional<UserSessionState> state = this.users.findSessionState(user.id());
+		if (state.isEmpty() || state.get().status() != UserStatus.ACTIVE) {
 			return "account disabled";
+		}
+		if (state.get().securityVersion() != user.securityVersion()) {
+			return "access changed";
 		}
 		return null;
 	}

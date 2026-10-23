@@ -49,6 +49,9 @@ public class User {
 	@Column(name = "locked_until")
 	private Instant lockedUntil;
 
+	@Column(name = "security_version", nullable = false)
+	private long securityVersion;
+
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
 	@Enumerated(EnumType.STRING)
@@ -121,13 +124,45 @@ public class User {
 	/** Blocks login and ends the user's open sessions on their next request. */
 	public void disable(Instant now) {
 		this.status = UserStatus.DISABLED;
+		endSessions(now);
+	}
+
+	public void enable(Instant now) {
+		this.status = UserStatus.ACTIVE;
 		this.updatedAt = now;
 	}
 
+	/** Changing roles ends open sessions, so new or removed rights apply at once. */
 	public void grantRole(Role role, Instant now) {
 		if (this.roles.add(role)) {
-			this.updatedAt = now;
+			endSessions(now);
 		}
+	}
+
+	public void revokeRole(Role role, Instant now) {
+		if (role == Role.LEARNER) {
+			throw new IllegalArgumentException("Every user keeps the learner role");
+		}
+		if (this.roles.remove(role)) {
+			endSessions(now);
+		}
+	}
+
+	/**
+	 * Ends all open sessions of this user on their next request: each session remembers
+	 * the security version from its login (see SessionPolicyFilter).
+	 */
+	public void endSessions(Instant now) {
+		this.securityVersion++;
+		this.updatedAt = now;
+	}
+
+	public boolean isStaff() {
+		return requiresMfa();
+	}
+
+	public boolean hasRole(Role role) {
+		return this.roles.contains(role);
 	}
 
 	public Long getId() {
@@ -152,6 +187,18 @@ public class User {
 
 	public Instant getEmailVerifiedAt() {
 		return this.emailVerifiedAt;
+	}
+
+	public Instant getLockedUntil() {
+		return this.lockedUntil;
+	}
+
+	public long getSecurityVersion() {
+		return this.securityVersion;
+	}
+
+	public Instant getCreatedAt() {
+		return this.createdAt;
 	}
 
 	public Set<Role> getRoles() {
