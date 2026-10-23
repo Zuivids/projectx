@@ -11,27 +11,48 @@ Online learning platform with paid courses, MFA login and an admin area.
 - Tests: JUnit 5 + Testcontainers (needs Docker running), Vitest for the frontend
 - CI: GitHub Actions runs backend and frontend checks on every pull request
 
-## Run the whole app locally
+## Run the whole system locally
 
-1. Start the backend: run `TestProjectxApplication` from `src/test` in your IDE (see below for other ways).
-2. Start the frontend: `cd frontend`, then `npm install` (first time only) and `npm run dev`.
-3. Open http://localhost:5173.
+Needs Docker Desktop (running), Java 21 and Node.js 24. Use the `.bat` scripts on Windows (cmd, PowerShell or
+double-click) and the `.sh` scripts in Git Bash, Linux or macOS.
 
-## Run the backend locally
+| Script | What it does |
+| --- | --- |
+| `dev-start` | Starts the database, backend and frontend; prints the app address, the super admin login and the database login |
+| `dev-stop` | Stops all three; the data is kept |
+| `dev-reset-db` | Deletes all local data (asks first); the next start creates a fresh database |
+| `build-release` | Builds and tests everything into `release/` (see "Release build") |
 
-Easiest: run `TestProjectxApplication` from `src/test` in your IDE. It starts a throwaway MariaDB
-container and the `local` profile automatically.
+On the first run, `dev-start` creates `.env` with random passwords (never committed). Logs go to
+`logs/backend.log` and `logs/frontend.log`.
 
-With the Docker Compose database instead:
+What runs where:
 
-1. Copy `.env.example` to `.env` and set your own passwords.
-2. Start the database: `docker compose up -d`
-3. Start the app with the `local` profile and the variables from `.env` set, e.g. in PowerShell:
-   `$env:DB_PASSWORD="..."; ./mvnw spring-boot:run "-Dspring-boot.run.profiles=local"`
-4. Health check: http://localhost:8080/actuator/health
+| Part | Address | Notes |
+| --- | --- | --- |
+| App | http://localhost:5173 | Vite dev server; reloads when you change frontend code |
+| Backend | http://localhost:8080 | Spring Boot with the `local` profile; restart (`dev-stop`, `dev-start`) after backend changes |
+| Database | localhost:3306 | Docker container `projectx-mariadb`, data in the volume `projectx_mariadb-data` |
 
-The `local` profile allows the session cookie over plain http and contains a development-only MFA
+**Super admin:** the `local` profile creates `LOCAL_ADMIN_EMAIL` with `LOCAL_ADMIN_PASSWORD` from `.env`. Log in,
+set up MFA with an authenticator app on the "Drošība" page, and the admin panel opens.
+
+**DBeaver:** New connection → MariaDB → Host `localhost`, Port `3306`, Database `lms`, Username `lms_app`,
+Password = `DB_PASSWORD` from `.env`. For full access (e.g. to create other databases) use `root` with
+`DB_ROOT_PASSWORD`. Schema changes belong in Flyway migrations, not in DBeaver.
+
+The `local` profile also allows the session cookie over plain http and contains a development-only MFA
 encryption key. Staging and production must set `MFA_ENCRYPTION_KEY` instead.
+
+The integration tests do not touch this database: they start their own temporary database containers, which
+Testcontainers deletes when the tests finish. `TestProjectxApplication` (in `src/test`) does the same for a
+quick throwaway run from the IDE.
+
+## Release build
+
+`build-release` runs all backend and frontend checks and writes `release/projectx.jar` (the backend, run with
+`java -jar projectx.jar`) and `release/frontend/` (the built React app). Deploying them to a server waits for the
+hosting decisions in the backlog (D-05 hosting, D-09 how the frontend is served).
 
 ## Authentication API
 

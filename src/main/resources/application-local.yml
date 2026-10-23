@@ -1,15 +1,14 @@
-# Local development only. Activate with: --spring.profiles.active=local
-# Never use this profile or its key in staging or production.
+# Local development only. dev-start.bat / dev-start.sh activate it; never use it in staging or production.
 
 app:
   mfa:
     # LOCAL-ONLY key. Production must set MFA_ENCRYPTION_KEY from a secret store.
     encryption-key: cN8TweTSrRzWyffTo6nVDh7Yxz8c6VvVswT6oHB3DQ8=
 
-  # Register your account first, then list its email here and restart: it gets the admin role.
-  # bootstrap:
-  #   admin-emails:
-  #     - you@example.com
+  # Super admin created automatically for local testing (values come from .env)
+  local-seed:
+    admin-email: ${LOCAL_ADMIN_EMAIL:}
+    admin-password: ${LOCAL_ADMIN_PASSWORD:}
 
 server:
   servlet:
