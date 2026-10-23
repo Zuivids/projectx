@@ -6,17 +6,21 @@ rem Deploying them to a server waits for the hosting decision (BACKLOG D-05, D-0
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-docker info >nul 2>nul || (echo ERROR: Docker must be running ^(the tests use it^). & exit /b 1)
+rem Started by double-click? Then keep the window open at the end, so messages can be read.
+set "KEEP_OPEN="
+echo %cmdcmdline% | find /i "%~nx0" >nul && set "KEEP_OPEN=1"
+
+docker info >nul 2>nul || (set "MSG=Docker must be running (the tests use it)." & goto :fail)
 
 echo Building and testing the backend...
-call .\mvnw.cmd -B -q clean verify || (echo ERROR: Backend build or tests failed. & exit /b 1)
+call .\mvnw.cmd -B -q clean verify || (set "MSG=Backend build or tests failed. See the output above." & goto :fail)
 
 echo Building and testing the frontend...
 pushd frontend
-call npm ci --no-fund || (popd & exit /b 1)
-call npm run lint || (popd & exit /b 1)
-call npm test || (popd & exit /b 1)
-call npm run build || (popd & exit /b 1)
+call npm ci --no-fund || (popd & set "MSG=npm ci failed." & goto :fail)
+call npm run lint || (popd & set "MSG=Frontend lint failed." & goto :fail)
+call npm test || (popd & set "MSG=Frontend tests failed." & goto :fail)
+call npm run build || (popd & set "MSG=Frontend build failed." & goto :fail)
 popd
 
 if exist release rmdir /s /q release
@@ -26,3 +30,11 @@ xcopy /e /i /q frontend\dist release\frontend >nul
 git rev-parse --short HEAD > release\VERSION 2>nul
 
 echo Release ready in release\
+if defined KEEP_OPEN pause
+exit /b 0
+
+:fail
+echo.
+echo ERROR: %MSG%
+if defined KEEP_OPEN pause
+exit /b 1

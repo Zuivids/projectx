@@ -61,6 +61,13 @@ server:
         secure: true
         same-site: strict
 
+logging:
+  level:
+    # These two log the JDBC URL at startup, and the MariaDB driver includes the database
+    # password in it. Warnings and errors are still logged.
+    org.flywaydb.core.FlywayExecutor: WARN
+    org.hibernate.orm.connections.pooling: WARN
+
 management:
   endpoints:
     web:
