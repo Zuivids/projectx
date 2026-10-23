@@ -13,11 +13,10 @@ export function AdminPage() {
           <h2>Kursi</h2>
           <p className="muted">Kursi, sadaļas un nodarbības; publicēšana.</p>
         </Link>
-        <div className="card">
+        <Link to="/admin/lietotaji" className="card card-link">
           <h2>Lietotāji</h2>
-          <p className="muted">Meklēt, bloķēt, atiestatīt MFA.</p>
-          <span className="badge">Drīzumā</span>
-        </div>
+          <p className="muted">Meklēt, bloķēt, atiestatīt MFA, piešķirt lomas.</p>
+        </Link>
         <div className="card">
           <h2>Pasūtījumi</h2>
           <p className="muted">Maksājumi un atmaksas.</p>

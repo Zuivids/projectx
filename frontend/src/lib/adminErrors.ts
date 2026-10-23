@@ -1,7 +1,7 @@
 import { ApiError } from '../api/client'
 
 /**
- * Latvian texts for the course admin API's error messages. The server's details are
+ * Latvian texts for the admin API's error messages. The server's details are
  * English, so they are matched here in one place. (When the UI gets translation files,
  * backlog W-09, the server should send stable error codes instead of texts.)
  */
@@ -15,6 +15,12 @@ const MESSAGES: Record<string, string> = {
   'Only drafts that were never published can be deleted. Archive it instead.':
     'Dzēst var tikai melnrakstu, kas nekad nav publicēts. Publicētu kursu arhivē.',
   'The new order must list every item exactly once': 'Saraksts ir novecojis. Pārlādē lapu.',
+  'You cannot block your own account': 'Savu kontu bloķēt nevar.',
+  'Change your own MFA on the security page': 'Savu MFA maini sadaļā “Drošība”.',
+  'You cannot change your own roles': 'Savas lomas mainīt nevar.',
+  'Only a super admin can manage admin accounts':
+    'Administratoru kontus var pārvaldīt tikai galvenais administrators.',
+  'Only a super admin can change roles': 'Lomas var mainīt tikai galvenais administrators.',
 }
 
 export function adminErrorText(err: unknown): string {

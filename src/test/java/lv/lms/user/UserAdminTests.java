@@ -167,6 +167,13 @@ class UserAdminTests {
 		java.util.List<String> types = JsonPath.read(detail, "$.activity[*].type");
 		org.assertj.core.api.Assertions.assertThat(types)
 			.containsSubsequence("USER_UNLOCKED", "LOGIN_SUCCEEDED", "USER_REGISTERED");
+
+		// On the admin's own page the same action is marked as done to another account
+		long adminId = this.sessions.userId(this.admin);
+		this.mvc.perform(get(USERS + adminId).session(this.superAdmin))
+			.andExpect(jsonPath("$.activity[0].type").value("USER_UNLOCKED"))
+			.andExpect(jsonPath("$.activity[0].byAdmin").value(false))
+			.andExpect(jsonPath("$.activity[0].otherUserId").value(id));
 	}
 
 	private ResultActions action(MockHttpServletRequestBuilder request, MockHttpSession session) throws Exception {

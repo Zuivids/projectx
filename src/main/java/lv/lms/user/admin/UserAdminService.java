@@ -206,9 +206,12 @@ public class UserAdminService {
 	}
 
 	private static UserAdminResponses.Activity toActivity(AuditLogEntry entry, long userId) {
-		boolean byAdmin = entry.getTargetUserId() != null && entry.getTargetUserId() == userId;
+		Long target = entry.getTargetUserId();
+		boolean byAdmin = target != null && target == userId;
+		// This user's own admin actions on other accounts must not look like events on this account
+		Long otherUserId = (target != null && target != userId) ? target : null;
 		return new UserAdminResponses.Activity(entry.getOccurredAt(), entry.getEventType(), entry.getIpAddress(),
-				entry.getDetails(), byAdmin);
+				entry.getDetails(), byAdmin, otherUserId);
 	}
 
 	private static List<Role> sortedRoles(User user) {

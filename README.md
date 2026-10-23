@@ -68,14 +68,24 @@ Security rules:
 - Authenticator codes and recovery codes each work once. TOTP secrets are AES-256-GCM encrypted.
 - Security events (logins, failures, lockouts, MFA changes) go to the append-only `audit_log` table.
 
-## Becoming an admin
+## Roles and the first super admin
 
-There is no user-management screen yet (backlog W-08). To make your account an admin:
+| Role | Can |
+| --- | --- |
+| Learner (`LEARNER`) | Use the site; every account has this role |
+| Admin (`ADMIN`) | Admin panel: courses, and managing learner accounts |
+| Super admin (`SUPER_ADMIN`) | Everything an admin can, plus managing admin accounts and granting/removing roles |
+
+Admin roles always require MFA. Nobody can block themselves or change their own roles.
+
+The first super admin is created at startup:
 
 1. Register normally.
 2. List your email under `app.bootstrap.admin-emails` (see the commented example in `application-local.yml`,
-   or set the environment variable `APP_BOOTSTRAP_ADMIN_EMAILS`) and restart the backend.
+   or set the environment variable `APP_BOOTSTRAP_ADMIN_EMAILS`) and restart the backend. The account gets the
+   super admin role.
 3. Log in and set up MFA on the security page. The admin panel opens only in a session that passed MFA.
+4. From then on, appoint other admins in the admin panel (Lietotāji) and remove the setting.
 
 Important:
 
@@ -84,6 +94,22 @@ Important:
   registered, the email is taken and this is no longer possible. Remove the setting when it is no longer needed.
 - `TestProjectxApplication` starts an empty database on every run, so for a lasting admin account use the
   Docker Compose database (see "Run the backend locally").
+
+## User management API
+
+Admin role + MFA. Every action returns the user and is audited with the admin as actor and the user as target.
+Blocking, role changes and MFA resets end the user's open sessions immediately (security version).
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/users?query=&status=&page=&size=` | Search by email or name |
+| GET | `/api/v1/admin/users/{id}` | Details and the last 30 activity entries |
+| POST | `/api/v1/admin/users/{id}/disable` · `/enable` | Block / unblock the account |
+| POST | `/api/v1/admin/users/{id}/unlock` | Lift a lockout after failed logins (account and every IP) |
+| POST | `/api/v1/admin/users/{id}/reset-mfa` | Remove authenticator and recovery codes (lost phone) |
+| PUT / DELETE | `/api/v1/admin/users/{id}/roles/{ADMIN\|SUPER_ADMIN}` | Grant / remove a role (super admin only) |
+
+Accounts with an admin role can only be managed by a super admin.
 
 ## Courses API
 

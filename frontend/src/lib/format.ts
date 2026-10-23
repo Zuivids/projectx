@@ -1,4 +1,5 @@
 import type { CourseLevel, CourseStatus, LessonType } from '../api/courses'
+import type { Role, UserStatus } from '../api/users'
 
 /** 4900 → "49,00 €" */
 export function formatPrice(cents: number, currency = 'EUR'): string {
@@ -51,6 +52,39 @@ export const STATUS_LABELS: Record<CourseStatus, string> = {
   DRAFT: 'Melnraksts',
   PUBLISHED: 'Publicēts',
   ARCHIVED: 'Arhivēts',
+}
+
+export const ROLE_LABELS: Record<Role, string> = {
+  LEARNER: 'Apmācāmais',
+  ADMIN: 'Administrators',
+  SUPER_ADMIN: 'Galvenais administrators',
+}
+
+export const USER_STATUS_LABELS: Record<UserStatus, string> = {
+  ACTIVE: 'Aktīvs',
+  DISABLED: 'Bloķēts',
+}
+
+/** Audit log event names (lv.lms.audit.AuditEventType); unknown ones are shown as they are. */
+export const AUDIT_EVENT_LABELS: Record<string, string> = {
+  USER_REGISTERED: 'Reģistrējās',
+  LOGIN_SUCCEEDED: 'Pieslēdzās',
+  LOGIN_FAILED: 'Neveiksmīga pieslēgšanās',
+  ACCOUNT_LOCKED: 'Konts bloķēts pēc kļūdām',
+  BLOCKED_FOR_IP: 'IP adrese bloķēta pēc kļūdām',
+  MFA_CHALLENGE_PASSED: 'MFA kods pareizs',
+  MFA_CHALLENGE_FAILED: 'Nepareizs MFA kods',
+  MFA_ENABLED: 'Ieslēdza MFA',
+  RECOVERY_CODE_USED: 'Izmantoja atkopšanas kodu',
+  LOGGED_OUT: 'Izgāja',
+  SESSION_ENDED: 'Sesija beigta',
+  ADMIN_ROLE_GRANTED: 'Lomu piešķīra palaišanas iestatījums',
+  USER_DISABLED: 'Konts bloķēts',
+  USER_ENABLED: 'Konts atbloķēts',
+  USER_UNLOCKED: 'Bloķēšana pēc kļūdām atcelta',
+  MFA_RESET_BY_ADMIN: 'MFA atiestatīts',
+  ROLE_GRANTED: 'Piešķirta loma',
+  ROLE_REVOKED: 'Noņemta loma',
 }
 
 export const LESSON_TYPE_LABELS: Record<LessonType, string> = {

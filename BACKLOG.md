@@ -31,7 +31,7 @@ The team's list of things that still need a decision or work. Requirement IDs (e
 | W-02 | Password reset (AUTH-12) | Expiring token by email; all sessions ended after the change | D-01 | Blocked | |
 | W-03 | Leaked-password check (AUTH-03) | Reject new passwords found in known breach lists (e.g. Have I Been Pwned range API, which never sends the full password) | | Open | |
 | W-06 | Correct client IP behind a proxy | Must be done before going live behind a proxy: until forwarded headers are configured, rate limits and per-IP blocks treat all users as one IP, and the audit log records the proxy's IP | D-05 | Blocked | |
-| W-08 | Admin panel features | Course management done (API and screens, phase 2). Still missing: user management (list, disable, reset MFA, grant roles) and orders (phase 3) | | In progress | |
+| W-08 | Admin panel features | Courses and users done. Still missing: orders and refunds (phase 3) | | In progress | |
 | W-09 | UI texts in resource files (NFR-12) | Latvian texts are written directly in the components; move them to translation files before adding a second language. Then the server should also send stable error codes instead of English texts (now mapped in `frontend/src/lib/adminErrors.ts`) | | Open | |
 | W-10 | Shared rate-limit store for several app instances | Rate limits and per-IP blocks live in memory; only needed if the app ever runs as more than one instance (then e.g. Redis) | D-05 | Open | |
 
@@ -48,3 +48,4 @@ Move finished items here, so the tables above show only what is open.
 | W-04 | Per-IP rate limiting and per-IP login blocking (AUTH-10) | 2026-10-22 | PR #7 |
 | W-05 | Instant logout of disabled users | 2026-10-22 | `feature/session-hardening` |
 | W-07 | Session timeouts: admins 15 min idle / 8 h max, learners 30 min / 24 h (AUTH-15) | 2026-10-22 | `feature/session-hardening` |
+| – | Admin user management: search, block, unlock, reset MFA, roles; super admin role; immediate session end on access changes | 2026-10-23 | `feature/user-admin` |

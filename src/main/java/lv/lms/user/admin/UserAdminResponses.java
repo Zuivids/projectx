@@ -27,9 +27,13 @@ public final class UserAdminResponses {
 			List<Activity> activity) {
 	}
 
-	/** @param byAdmin the event was an admin's action on this account */
+	/**
+	 * @param byAdmin the event was an admin's action on this account
+	 * @param otherUserId set when this user (as an admin) acted on another account: that
+	 * account's id
+	 */
 	public record Activity(Instant occurredAt, AuditEventType type, String ipAddress, String details,
-			boolean byAdmin) {
+			boolean byAdmin, Long otherUserId) {
 	}
 
 }
