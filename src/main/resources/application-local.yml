@@ -6,6 +6,11 @@ app:
     # LOCAL-ONLY key. Production must set MFA_ENCRYPTION_KEY from a secret store.
     encryption-key: cN8TweTSrRzWyffTo6nVDh7Yxz8c6VvVswT6oHB3DQ8=
 
+  # Register your account first, then list its email here and restart: it gets the admin role.
+  # bootstrap:
+  #   admin-emails:
+  #     - you@example.com
+
 server:
   servlet:
     session:

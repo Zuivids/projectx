@@ -68,6 +68,46 @@ Security rules:
 - Authenticator codes and recovery codes each work once. TOTP secrets are AES-256-GCM encrypted.
 - Security events (logins, failures, lockouts, MFA changes) go to the append-only `audit_log` table.
 
+## Becoming an admin
+
+There is no user-management screen yet (backlog W-08). To make your account an admin:
+
+1. Register normally.
+2. List your email under `app.bootstrap.admin-emails` (see the commented example in `application-local.yml`,
+   or set the environment variable `APP_BOOTSTRAP_ADMIN_EMAILS`) and restart the backend.
+3. Log in and set up MFA on the security page. The admin panel opens only in a session that passed MFA.
+
+## Courses API
+
+Courses go through `DRAFT → PUBLISHED → ARCHIVED → DRAFT`. Only published courses are visible to learners.
+Prices are in euro cents (`4900` = 49.00 EUR). Lessons are `AUDIO` or `TEXT`; the audio file itself waits for
+the media hosting decision (backlog D-06).
+
+Admin endpoints (admin role + MFA). Every change returns the whole course and is written to the audit log.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/courses?status=&page=&size=` | List all courses |
+| POST | `/api/v1/admin/courses` | Create `{title, slug?, description, priceCents, level?}`; slug generated from the title if empty |
+| GET | `/api/v1/admin/courses/{id}` | Course with sections and lessons |
+| PUT | `/api/v1/admin/courses/{id}` | Update; send the `version` you loaded, 409 if someone changed it meanwhile |
+| DELETE | `/api/v1/admin/courses/{id}` | Only drafts that were never published; otherwise archive |
+| POST | `/api/v1/admin/courses/{id}/publish` · `/archive` · `/restore` | Change status |
+| POST | `/api/v1/admin/courses/{id}/sections` | Add section `{title}` |
+| PUT / DELETE | `/api/v1/admin/courses/{id}/sections/{sectionId}` | Rename / delete section |
+| PUT | `/api/v1/admin/courses/{id}/sections/order` | Reorder sections `{ids: [...]}` (every id exactly once) |
+| POST | `/api/v1/admin/courses/{id}/sections/{sectionId}/lessons` | Add lesson `{title, type, contentText?, audioRef?, durationSeconds?, preview}` |
+| PUT | `/api/v1/admin/courses/{id}/sections/{sectionId}/lessons/order` | Reorder lessons |
+| PUT / DELETE | `/api/v1/admin/courses/{id}/lessons/{lessonId}` | Update / delete lesson |
+
+Public catalog (no login):
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/courses?page=&size=` | Published courses |
+| GET | `/api/v1/courses/{slug}` | Course page: description, price, table of contents (no lesson content) |
+| GET | `/api/v1/courses/{slug}/lessons/{lessonId}` | Content of a free preview lesson; other lessons answer 403 until purchases exist |
+
 ## Conventions
 
 - Controllers accept and return DTOs only; JPA entities never leave the service layer.

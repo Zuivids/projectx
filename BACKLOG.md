@@ -18,7 +18,7 @@ The team's list of things that still need a decision or work. Requirement IDs (e
 | D-03 | Who handles VAT and invoice rules (accountant, or a merchant of record like Paddle)? | Affects checkout, invoices and the payment provider choice | | Open | |
 | D-04 | Frontend framework (React, Angular, Thymeleaf)? | Blocks all user interface work | | Decided | React + TypeScript (Vite), in `frontend/` (2026-10-22) |
 | D-05 | Hosting provider and EU region? | Blocks deployment and W-06 client IP behind a proxy | | Open | |
-| D-06 | Audio/video hosting provider, and is DRM needed? | Blocks course content delivery (phase 2) | | Open | |
+| D-06 | Audio/video hosting provider, and is DRM needed? | Blocks playing audio lessons: lessons have an empty `audio_ref` field until this is decided | | Open | |
 | D-07 | Final product name and domain | Needed before registering the domain and setting up the payment provider | | Open | |
 | D-08 | Budget for a penetration test and legal review before launch | Required before go-live (SEC-17, SEC-20) | | Open | |
 | D-09 | In production, is the React app served by Spring Boot or by a separate web server/CDN on the same domain? | Must stay same-origin for the session and CSRF cookies; depends on D-05 | | Open | |
@@ -31,7 +31,7 @@ The team's list of things that still need a decision or work. Requirement IDs (e
 | W-02 | Password reset (AUTH-12) | Expiring token by email; all sessions ended after the change | D-01 | Blocked | |
 | W-03 | Leaked-password check (AUTH-03) | Reject new passwords found in known breach lists (e.g. Have I Been Pwned range API, which never sends the full password) | | Open | |
 | W-06 | Correct client IP behind a proxy | Must be done before going live behind a proxy: until forwarded headers are configured, rate limits and per-IP blocks treat all users as one IP, and the audit log records the proxy's IP | D-05 | Blocked | |
-| W-08 | Admin panel features | Panel is an empty frame; needs backend admin endpoints (users, courses, orders) | | Open | |
+| W-08 | Admin panel features | Course management API done (phase 2). Still missing: user management (list, disable, reset MFA, grant roles) and orders (phase 3) | | In progress | |
 | W-09 | UI texts in resource files (NFR-12) | Latvian texts are written directly in the components; move them to translation files before adding a second language | | Open | |
 | W-10 | Shared rate-limit store for several app instances | Rate limits and per-IP blocks live in memory; only needed if the app ever runs as more than one instance (then e.g. Redis) | D-05 | Open | |
 
