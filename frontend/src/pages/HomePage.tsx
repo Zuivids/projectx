@@ -26,7 +26,9 @@ export function HomePage() {
         <h2>Mani kursi</h2>
         <div className="empty-state">
           <p>Tev vēl nav neviena kursa.</p>
-          <p className="muted">Kursu katalogs būs pieejams drīzumā.</p>
+          <Link to="/kursi" className="button">
+            Apskatīt kursus
+          </Link>
         </div>
       </section>
     </>
