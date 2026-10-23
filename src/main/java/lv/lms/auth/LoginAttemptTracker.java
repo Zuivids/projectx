@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
  * database is the durable second line of defence.
  */
 @Component
-class LoginAttemptTracker {
+public class LoginAttemptTracker {
 
 	private static final int MAX_KEYS = 100_000;
 
@@ -60,6 +60,12 @@ class LoginAttemptTracker {
 
 	void reset(long userId, String ip) {
 		this.attempts.invalidate(key(userId, ip));
+	}
+
+	/** Lifts the per-IP blocks of an account on all addresses (admin "unlock"). */
+	public void resetAll(long userId) {
+		String prefix = userId + "|";
+		this.attempts.asMap().keySet().removeIf((key) -> key.startsWith(prefix));
 	}
 
 	private static String key(long userId, String ip) {

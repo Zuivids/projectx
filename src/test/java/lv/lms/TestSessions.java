@@ -14,6 +14,7 @@ import lv.lms.user.UserRepository;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -49,12 +50,49 @@ public class TestSessions {
 
 	/** A new admin account, logged in, without MFA in this session. */
 	public MockHttpSession adminWithoutMfa() throws Exception {
-		return login(registerAdmin());
+		return login(registerWithRole(Role.ADMIN));
 	}
 
 	/** A new admin account, logged in, with MFA set up and verified in this session. */
 	public MockHttpSession adminWithMfa() throws Exception {
 		MockHttpSession session = adminWithoutMfa();
+		enableMfa(session);
+		return session;
+	}
+
+	/** A new super admin account, logged in, with MFA set up and verified in this session. */
+	public MockHttpSession superAdminWithMfa() throws Exception {
+		MockHttpSession session = login(registerWithRole(Role.SUPER_ADMIN));
+		enableMfa(session);
+		return session;
+	}
+
+	/** Registers a new learner account and returns its email. */
+	public String register() throws Exception {
+		String email = "user-" + UUID.randomUUID() + "@example.com";
+		this.mvc
+			.perform(post("/api/v1/auth/register").with(browser()).contentType(MediaType.APPLICATION_JSON)
+				.content("{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\",\"displayName\":\"Test\"}"))
+			.andExpect(status().isAccepted());
+		return email;
+	}
+
+	/** Logs in with the test password; expects a session without an MFA step. */
+	public MockHttpSession login(String email) throws Exception {
+		MockHttpSession session = new MockHttpSession();
+		attemptLogin(session, email, PASSWORD).andExpect(status().isOk());
+		return session;
+	}
+
+	/** A login request whose outcome the test checks itself. */
+	public ResultActions attemptLogin(MockHttpSession session, String email, String password) throws Exception {
+		return this.mvc.perform(post("/api/v1/auth/login").with(browser()).session(session)
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}"));
+	}
+
+	/** Sets up and confirms MFA in the session; the session becomes MFA-verified. */
+	public byte[] enableMfa(MockHttpSession session) throws Exception {
 		String setup = this.mvc.perform(post("/api/v1/me/mfa/totp").with(browser()).session(session))
 			.andExpect(status().isOk())
 			.andReturn()
@@ -66,13 +104,17 @@ public class TestSessions {
 			.perform(post("/api/v1/me/mfa/totp/confirm").with(browser()).session(session)
 				.contentType(MediaType.APPLICATION_JSON).content("{\"code\":\"" + code + "\"}"))
 			.andExpect(status().isOk());
-		return session;
+		return secret;
 	}
 
 	/** Id of the user logged in to the session, via /api/v1/me. */
 	public long userId(MockHttpSession session) throws Exception {
 		String me = this.mvc.perform(get("/api/v1/me").session(session)).andReturn().getResponse().getContentAsString();
-		return this.users.findByEmail(JsonPath.read(me, "$.email")).orElseThrow().getId();
+		return userId(JsonPath.<String>read(me, "$.email"));
+	}
+
+	public long userId(String email) {
+		return this.users.findByEmail(email).orElseThrow().getId();
 	}
 
 	/** Adds a CSRF token the way the frontend does, sent from this instance's client IP. */
@@ -91,30 +133,12 @@ public class TestSessions {
 		};
 	}
 
-	private String register() throws Exception {
-		String email = "user-" + UUID.randomUUID() + "@example.com";
-		this.mvc
-			.perform(post("/api/v1/auth/register").with(browser()).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\",\"displayName\":\"Test\"}"))
-			.andExpect(status().isAccepted());
-		return email;
-	}
-
-	private String registerAdmin() throws Exception {
+	private String registerWithRole(Role role) throws Exception {
 		String email = register();
 		User user = this.users.findByEmail(email).orElseThrow();
-		user.grantRole(Role.ADMIN, this.clock.instant());
+		user.grantRole(role, this.clock.instant());
 		this.users.save(user);
 		return email;
-	}
-
-	private MockHttpSession login(String email) throws Exception {
-		MockHttpSession session = new MockHttpSession();
-		this.mvc
-			.perform(post("/api/v1/auth/login").with(browser()).session(session).contentType(MediaType.APPLICATION_JSON)
-				.content("{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\"}"))
-			.andExpect(status().isOk());
-		return session;
 	}
 
 	private static String randomIp() {

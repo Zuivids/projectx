@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Gives the admin role to the accounts listed in {@code app.bootstrap.admin-emails} when
- * the application starts. This is how the first admin is created, until there is an admin
- * screen for managing users (backlog W-08). The accounts must already be registered, and
+ * Gives the super admin role to the accounts listed in {@code app.bootstrap.admin-emails} when
+ * the application starts. This is how the first super admin is created; after that, super
+ * admins appoint other admins in the admin panel. The accounts must already be registered, and
  * they still need MFA before the admin panel opens.
  */
 @Component
@@ -47,12 +47,12 @@ class AdminBootstrap implements ApplicationRunner {
 		for (String email : this.properties.adminEmails()) {
 			String normalized = email.strip().toLowerCase(Locale.ROOT);
 			this.users.findByEmail(normalized).ifPresentOrElse((user) -> {
-				if (!user.getRoles().contains(Role.ADMIN)) {
-					user.grantRole(Role.ADMIN, this.clock.instant());
+				if (!user.hasRole(Role.SUPER_ADMIN)) {
+					user.grantRole(Role.SUPER_ADMIN, this.clock.instant());
 					this.users.save(user);
 					this.audit.record(AuditEventType.ADMIN_ROLE_GRANTED, user.getId(), null,
-							"granted at startup by app.bootstrap.admin-emails");
-					logger.info("Granted the admin role to user {}", user.getId());
+							"SUPER_ADMIN granted at startup by app.bootstrap.admin-emails");
+					logger.info("Granted the super admin role to user {}", user.getId());
 				}
 			}, () -> logger.warn("app.bootstrap.admin-emails lists an email that is not registered yet"));
 		}

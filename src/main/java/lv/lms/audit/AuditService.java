@@ -24,7 +24,14 @@ public class AuditService {
 	 */
 	@Transactional(propagation = Propagation.REQUIRED)
 	public void record(AuditEventType type, Long userId, String ipAddress, String details) {
-		this.repository.save(new AuditLogEntry(this.clock.instant(), type, userId, ipAddress, details));
+		this.repository.save(new AuditLogEntry(this.clock.instant(), type, userId, null, ipAddress, details));
+	}
+
+	/** Records an admin's action on another user's account. */
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void recordAdminAction(AuditEventType type, Actor admin, long targetUserId, String details) {
+		this.repository.save(new AuditLogEntry(this.clock.instant(), type, admin.userId(), targetUserId,
+				admin.ipAddress(), details));
 	}
 
 }

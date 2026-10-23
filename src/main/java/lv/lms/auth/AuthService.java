@@ -173,7 +173,7 @@ public class AuthService {
 
 	private Authentication authentication(User user, boolean mfaVerified) {
 		AuthenticatedUser principal = new AuthenticatedUser(user.getId(), user.getEmail(), user.requiresMfa(),
-				this.clock.instant());
+				this.clock.instant(), user.getSecurityVersion());
 		return UsernamePasswordAuthenticationToken.authenticated(principal, null, Authorities.of(user, mfaVerified));
 	}
 
