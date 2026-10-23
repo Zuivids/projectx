@@ -35,6 +35,24 @@ function renderAt(path: string) {
   )
 }
 
+describe('navigation bar colour', () => {
+  it('is green for learners', async () => {
+    loggedInAs(learner)
+    renderAt('/sakums')
+    await screen.findByRole('heading', { name: 'Labdien, Anna!' })
+    expect(screen.getByRole('banner')).not.toHaveClass('site-header-admin')
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument()
+  })
+
+  it('is red with an Admin label for admins', async () => {
+    loggedInAs(admin)
+    renderAt('/sakums')
+    await screen.findByRole('heading', { name: 'Labdien, Admins!' })
+    expect(screen.getByRole('banner')).toHaveClass('site-header-admin')
+    expect(screen.getByText('Admin')).toBeInTheDocument()
+  })
+})
+
 describe('page access', () => {
   it('shows the landing page to visitors', async () => {
     loggedInAs(null)

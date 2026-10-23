@@ -16,13 +16,22 @@ export function Layout() {
     await logout()
   }
 
+  const admin = isAdmin(user)
+
   return (
     <>
-      <header className="site-header">
+      {/* Red bar for admins: a constant reminder that this account can change things */}
+      <header className={admin ? 'site-header site-header-admin' : 'site-header'}>
         <div className="container header-inner">
-          <Link to={user ? '/sakums' : '/'} className="brand">
-            {APP_NAME}
-          </Link>
+          <span className="brand-row">
+            <Link to={user ? '/sakums' : '/'} className="brand">
+              <span className="brand-mark" aria-hidden="true">
+                {APP_NAME.charAt(0)}
+              </span>
+              {APP_NAME}
+            </Link>
+            {admin && <span className="role-pill">Admin</span>}
+          </span>
           <nav className="nav">
             {user ? (
               <>
