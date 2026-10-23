@@ -20,7 +20,9 @@ services:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 3s
       timeout: 5s
-      retries: 20
+      retries: 30
+      # Recovery after an unclean shutdown (PC or Docker turned off) may take longer
+      start_period: 60s
     restart: unless-stopped
 
 volumes:
