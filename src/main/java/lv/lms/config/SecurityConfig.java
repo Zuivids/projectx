@@ -1,11 +1,14 @@
 package lv.lms.config;
 
+import java.time.Clock;
 import java.util.Map;
 
 import lv.lms.audit.AuditEventType;
 import lv.lms.audit.AuditService;
 import lv.lms.auth.AuthenticatedUser;
 import lv.lms.auth.Authorities;
+import lv.lms.auth.SessionPolicyFilter;
+import lv.lms.user.UserRepository;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +30,7 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
@@ -36,9 +40,11 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository,
-			AuditService audit) throws Exception {
+			AuditService audit, UserRepository users, AppProperties properties, Clock clock) throws Exception {
 		http
 			.securityContext((context) -> context.securityContextRepository(securityContextRepository))
+			// Ends sessions of disabled users and sessions past their absolute timeout
+			.addFilterAfter(new SessionPolicyFilter(users, audit, properties, clock), SecurityContextHolderFilter.class)
 			// Token in a readable XSRF-TOKEN cookie, sent back by the SPA in X-XSRF-TOKEN
 			.csrf((csrf) -> csrf.spa())
 			.authorizeHttpRequests((auth) -> auth

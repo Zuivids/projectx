@@ -171,9 +171,10 @@ public class AuthService {
 		this.attempts.reset(user.getId(), ipAddress);
 	}
 
-	private static Authentication authentication(User user, boolean mfaVerified) {
-		return UsernamePasswordAuthenticationToken.authenticated(new AuthenticatedUser(user.getId(), user.getEmail()),
-				null, Authorities.of(user, mfaVerified));
+	private Authentication authentication(User user, boolean mfaVerified) {
+		AuthenticatedUser principal = new AuthenticatedUser(user.getId(), user.getEmail(), user.requiresMfa(),
+				this.clock.instant());
+		return UsernamePasswordAuthenticationToken.authenticated(principal, null, Authorities.of(user, mfaVerified));
 	}
 
 	static String normalizeEmail(String email) {

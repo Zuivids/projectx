@@ -9,7 +9,7 @@ import { FormError } from '../components/FormError'
 const LOGIN_EXPIRED = 'Login expired, please log in again'
 
 export function LoginPage() {
-  const { refresh } = useAuth()
+  const { refresh, sessionExpired } = useAuth()
   const [step, setStep] = useState<'password' | 'mfa'>('password')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -90,6 +90,9 @@ export function LoginPage() {
   return (
     <div className="narrow">
       <h1>Pieslēgties</h1>
+      {sessionExpired && (
+        <div className="notice notice-warning">Sesija beidzās. Lūdzu, pieslēdzies vēlreiz.</div>
+      )}
       <form onSubmit={submitPassword} className="form">
         <label>
           E-pasts

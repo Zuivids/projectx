@@ -37,8 +37,11 @@ class SecretCipherTests {
 
 	private static AppProperties properties(String key) {
 		AppProperties.RateLimit.Rule rule = new AppProperties.RateLimit.Rule(20, Duration.ofMinutes(1));
+		AppProperties.Session.Timeouts timeouts = new AppProperties.Session.Timeouts(Duration.ofMinutes(30),
+				Duration.ofHours(24));
 		return new AppProperties("Test", new AppProperties.Mfa(key, Duration.ofMinutes(5)),
-				new AppProperties.Lockout(5, 20, Duration.ofMinutes(15)), new AppProperties.RateLimit(rule, rule, rule));
+				new AppProperties.Lockout(5, 20, Duration.ofMinutes(15)), new AppProperties.RateLimit(rule, rule, rule),
+				new AppProperties.Session(timeouts, timeouts));
 	}
 
 }

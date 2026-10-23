@@ -22,12 +22,27 @@ export class ApiError extends Error {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
+const sessionLostListeners = new Set<() => void>()
+
+/**
+ * Called when the server answers 401 to a request outside /api/v1/auth: the session has
+ * ended (timeout, account disabled, logged out elsewhere). Returns an unsubscribe function.
+ */
+export function onSessionLost(listener: () => void): () => void {
+  sessionLostListeners.add(listener)
+  return () => sessionLostListeners.delete(listener)
+}
+
 export async function api<T>(path: string, options: { method?: Method; body?: unknown } = {}): Promise<T> {
   const method = options.method ?? 'GET'
-  const response = await send(path, method, options.body)
+  let response = await send(path, method, options.body)
   // The token may have been cleared (e.g. after logout): fetch a fresh one and retry once
   if (response.status === 403 && method !== 'GET' && !readCookie(CSRF_COOKIE)) {
-    return parse<T>(await send(path, method, options.body))
+    response = await send(path, method, options.body)
+  }
+  // A 401 from login or MFA means wrong credentials, not an ended session
+  if (response.status === 401 && !path.startsWith('/api/v1/auth/')) {
+    sessionLostListeners.forEach((listener) => listener())
   }
   return parse<T>(response)
 }
