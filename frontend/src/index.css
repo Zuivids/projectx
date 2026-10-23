@@ -12,8 +12,8 @@
   --yellow-500: #f2b705;
   --yellow-400: #f8c93a;
   --yellow-100: #fff6d6;
-  --red-800: #8f1d1d;
-  --red-700: #b42318;
+  --red-900: #4a0d0d;
+  --red-800: #6e1414;
 
   /* Light blue (default) */
   --blue-text: #1769aa;
@@ -122,8 +122,8 @@ h2 {
 
 /* Admins see a red bar, so it is always obvious that this account can change things */
 .site-header-admin {
-  --nav-bg: var(--red-700);
-  border-bottom-color: var(--red-800);
+  --nav-bg: var(--red-800);
+  border-bottom-color: var(--red-900);
 }
 
 .header-inner {
@@ -161,7 +161,7 @@ h2 {
   padding: 0.1rem 0.55rem;
   border-radius: 999px;
   background: var(--yellow-400);
-  color: var(--red-800);
+  color: var(--red-900);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.04em;
