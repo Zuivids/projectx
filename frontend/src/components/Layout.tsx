@@ -26,6 +26,7 @@ export function Layout() {
           <nav className="nav">
             {user ? (
               <>
+                <NavLink to="/kursi">Kursi</NavLink>
                 <NavLink to="/sakums">Mani kursi</NavLink>
                 <NavLink to="/konts/drosiba">Drošība</NavLink>
                 {isAdmin(user) && <NavLink to="/admin">Administrēšana</NavLink>}
@@ -35,6 +36,7 @@ export function Layout() {
               </>
             ) : (
               <>
+                <NavLink to="/kursi">Kursi</NavLink>
                 <NavLink to="/pieslegties">Pieslēgties</NavLink>
                 <Link to="/registreties" className="button button-small">
                   Reģistrēties

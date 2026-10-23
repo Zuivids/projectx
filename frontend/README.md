@@ -41,7 +41,12 @@ the session and CSRF cookies work as in production.
 | `/registreties` | Registration | Logged out |
 | `/sakums` | Home ("Mani kursi") | Logged in |
 | `/konts/drosiba` | Security: MFA setup with QR code and recovery codes | Logged in |
-| `/admin` | Admin panel (skeleton) | Admins who passed MFA in this session |
+| `/kursi` | Course catalog | Everyone |
+| `/kursi/:slug` | Course page with table of contents | Everyone |
+| `/kursi/:slug/nodarbibas/:id` | Free preview lesson | Everyone |
+| `/admin` | Admin panel start | Admins who passed MFA in this session |
+| `/admin/kursi` | Course list, new course | Admins with MFA |
+| `/admin/kursi/:id` | Course editor: details, status, sections and lessons | Admins with MFA |
 
 Route guards only decide what to show. The real protection is on the server, which checks every API request.
 

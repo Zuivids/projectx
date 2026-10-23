@@ -77,6 +77,14 @@ There is no user-management screen yet (backlog W-08). To make your account an a
    or set the environment variable `APP_BOOTSTRAP_ADMIN_EMAILS`) and restart the backend.
 3. Log in and set up MFA on the security page. The admin panel opens only in a session that passed MFA.
 
+Important:
+
+- **Register first, then list the email.** Until email verification exists (backlog W-01), anyone could
+  register a listed email that is not taken yet and become admin at the next restart. Once the real person has
+  registered, the email is taken and this is no longer possible. Remove the setting when it is no longer needed.
+- `TestProjectxApplication` starts an empty database on every run, so for a lasting admin account use the
+  Docker Compose database (see "Run the backend locally").
+
 ## Courses API
 
 Courses go through `DRAFT → PUBLISHED → ARCHIVED → DRAFT`. Only published courses are visible to learners.

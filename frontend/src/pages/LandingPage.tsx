@@ -28,6 +28,9 @@ export function LandingPage() {
               </Link>
             </>
           )}
+          <Link to="/kursi" className="button button-secondary">
+            Apskatīt kursus
+          </Link>
         </div>
       </section>
 
